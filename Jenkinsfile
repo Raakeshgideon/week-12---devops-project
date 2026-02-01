@@ -32,7 +32,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t yourdockerhub/week12-devops .'
+                bat 'docker build -t yourdockerhub/week12-devops .'
             }
         }
     }
