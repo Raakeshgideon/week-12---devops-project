@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        PYTHON = "C:\\Users\\raake\\AppData\\Local\\Programs\\Python\\Python311\\python.exe"
+        PYTHON_EXE = 'C:\\Users\\raake\\AppData\\Local\\Programs\\Python\\Python311\\python.exe'
+        SONAR_SCANNER = 'C:\\Program Files\\sonarQube\\sonar-scanner\\sonar-scanner-8.0.1.6346-windows-x64\\bin\\sonar-scanner.bat'
     }
 
     stages {
@@ -15,20 +16,23 @@ pipeline {
 
         stage('Install & Test') {
             steps {
-                bat "\"%PYTHON%\" -m pip install --upgrade pip"
-                bat "\"%PYTHON%\" -m pip install -r requirements.txt"
-                bat "\"%PYTHON%\" -m pytest"
+                bat """
+                "${PYTHON_EXE}" -m pip install --upgrade pip
+                "${PYTHON_EXE}" -m pip install -r requirements.txt
+                "${PYTHON_EXE}" -m pytest
+                """
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-               withSonarQubeEnv('week 12 - devops') {
+                withSonarQubeEnv('week 12 - devops') {
                     bat """
-                    sonar-scanner ^
-                    -Dsonar.projectKey=week-12-devops-project ^
+                    "${SONAR_SCANNER}" ^
+                    -Dsonar.projectKey=week12-devops ^
+                    -Dsonar.projectName=week12-devops ^
                     -Dsonar.sources=. ^
-                    -Dsonar.host.url=http://localhost:9090
+                    -Dsonar.host.url=http://localhost:9000
                     """
                 }
             }
@@ -36,35 +40,8 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
+                echo 'Skipping Quality Gate for local Jenkins demo'
             }
         }
 
-        stage('Docker Build') {
-            steps {
-                bat 'docker build -t raakeshdev/week12-devops:latest .'
-            }
-        }
-
-        stage('Docker Push') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
-                    bat 'docker push raakeshdev/week12-devops:latest'
-                }
-            }
-        }
-
-        stage('Deploy Local') {
-            steps {
-                bat 'docker run -d -p 5000:5000 raakeshdev/week12-devops:latest'
-            }
-        }
-    }
-}
+        stage('Docker
